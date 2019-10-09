@@ -1,0 +1,5 @@
+python-opencv
+python-vlc
+crypto
+bluepy
+gTTS
