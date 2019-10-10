@@ -1,16 +1,30 @@
 import cv2
-
-from src.vibro_bracelet.vibrations_generator import generate_vibration, init as braces_init
+#
+# from src.vibro_bracelet.vibrations_generator import generate_vibration, init as braces_init
 
 # Sync method for initializing the MI Band
 # Recommend to start before any activities
 # Sometimes too long
-braces_connected = braces_init()
-##
-
+# braces_connected = braces_init()
+# ##
+#
 from src.headphones.voice_synthesizer import play_sound
 
 path_to_dir_with_sounds = './resources/sounds/'
+
+
+def read_scenario():
+    with open("resources/scenario.csv", 'r') as f:
+        scenario = f.readlines()
+
+    scenario = map(lambda x: x.replace('\n', '').split(','), scenario)
+    scenario = map(lambda x: (int(x[0]), x[1], int(x[2])), scenario)
+    frame2action = dict()
+
+    for item in scenario:
+        frame2action[item[0]] = (item[1], item[2])
+    return frame2action
+
 
 # Create a VideoCapture object and read from input file
 # If the input is the camera, pass 0 instead of the video file name
@@ -20,11 +34,9 @@ cap = cv2.VideoCapture("resources/response.mp4")
 if not cap.isOpened():
     print("Error opening video stream or file")
 
-with open("resources/scenario.txt", 'rb') as f:
-    scenario = f.readlines()
-
 i = 0
 
+scenario = read_scenario()
 
 # Read until video is completed
 while cap.isOpened():
@@ -40,20 +52,21 @@ while cap.isOpened():
         if cv2.waitKey(25) & 0xFF == ord('q'):
             play_sound(path_to_dir=path_to_dir_with_sounds,
                        sound_name="sign_twenty_meters.mp3")
-            generate_vibration(2)
+            # generate_vibration(2)
 
         i = i + 1
 
-        event = (0, None, None)
         # TODO uncomment when write a script scenario
-        # event = scenario[i]
 
-        if not event[1] is None:
-            generate_vibration(event[1])
+        if i in scenario.keys():
+            event = scenario[i]
+            if not event[1] is None:
+                print(event[1])
+                # generate_vibration(event[1])
 
-        if not event[2] is None:
-            play_sound(path_to_dir=path_to_dir_with_sounds,
-                       sound_name=event[2])
+            if not event[0] is None:
+                play_sound(path_to_dir=path_to_dir_with_sounds,
+                           sound_name=event[0].replace(' ', '_').replace('!', '') + '.mp3')
 
     # Break the loop
     else:
